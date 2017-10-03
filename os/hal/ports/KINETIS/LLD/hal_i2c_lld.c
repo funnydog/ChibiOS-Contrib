@@ -49,6 +49,13 @@ I2CDriver I2CD1;
 I2CDriver I2CD2;
 #endif
 
+/**
+ * @brief   I2C2 driver identifier.
+ */
+#if KINETIS_I2C_USE_I2C2 || defined(__DOXYGEN__)
+I2CDriver I2CD3;
+#endif
+
 /*===========================================================================*/
 /* Driver local variables and types.                                         */
 /*===========================================================================*/
@@ -274,6 +281,17 @@ OSAL_IRQ_HANDLER(KINETIS_I2C1_IRQ_VECTOR) {
 
 #endif
 
+#if KINETIS_I2C_USE_I2C2 || defined(__DOXYGEN__)
+
+OSAL_IRQ_HANDLER(KINETIS_I2C2_IRQ_VECTOR) {
+
+  OSAL_IRQ_PROLOGUE();
+  serve_interrupt(&I2CD3);
+  OSAL_IRQ_EPILOGUE();
+}
+
+#endif
+
 /*===========================================================================*/
 /* Driver exported functions.                                                */
 /*===========================================================================*/
@@ -295,6 +313,12 @@ void i2c_lld_init(void) {
   i2cObjectInit(&I2CD2);
   I2CD2.thread = NULL;
   I2CD2.i2c = I2C1;
+#endif
+
+#if KINETIS_I2C_USE_I2C2
+  i2cObjectInit(&I2CD3);
+  I2CD3.thread = NULL;
+  I2CD3.i2c = I2C2;
 #endif
 
 }
@@ -331,6 +355,13 @@ void i2c_lld_start(I2CDriver *i2cp) {
     }
 #endif
 
+#if KINETIS_I2C_USE_I2C2
+    if (&I2CD3 == i2cp) {
+      SIM->SCGC1 |= SIM_SCGC1_I2C2;
+      nvicEnableVector(I2C2_IRQn, KINETIS_I2C_I2C2_PRIORITY);
+    }
+#endif
+
   }
 
   config_frequency(i2cp);
@@ -363,6 +394,13 @@ void i2c_lld_stop(I2CDriver *i2cp) {
     if (&I2CD2 == i2cp) {
       SIM->SCGC4 &= ~SIM_SCGC4_I2C1;
       nvicDisableVector(I2C1_IRQn);
+    }
+#endif
+
+#if KINETIS_I2C_USE_I2C2
+    if (&I2CD3 == i2cp) {
+      SIM->SCGC1 &= ~SIM_SCGC1_I2C2;
+      nvicDisableVector(I2C2_IRQn);
     }
 #endif
 

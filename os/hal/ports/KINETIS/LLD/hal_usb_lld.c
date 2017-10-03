@@ -400,7 +400,7 @@ void usb_lld_init(void) {
 
   SIM->SOPT2 |= SIM_SOPT2_USBSRC;
 
-#if defined(K20x5) || defined(K20x7)
+#if defined(K20x5) || defined(K20x7) || defined(K64)
 
 #if KINETIS_MCG_MODE == KINETIS_MCG_MODE_FEI
 
@@ -461,6 +461,10 @@ void usb_lld_start(USBDriver *usbp) {
 #else /* KINETIS_USB0_IS_USBOTG */
       SIM->SCGC4 |= SIM_SCGC4_USBFS;
 #endif /* KINETIS_USB0_IS_USBOTG */
+
+#if KINETIS_HAS_MPU
+      MPU->RGDAAC[0] |= MPU_RGDAACn_M4RE | MPU_RGDAACn_M4WE;
+#endif
 
 #if KINETIS_HAS_USB_CLOCK_RECOVERY
       USB0->CLK_RECOVER_IRC_EN |= USBx_CLK_RECOVER_IRC_EN_IRC_EN;

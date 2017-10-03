@@ -41,6 +41,11 @@
 ADCDriver ADCD1;
 #endif
 
+/** @brief ADC2 driver identifier.*/
+#if KINETIS_ADC_USE_ADC1 || defined(__DOXYGEN__)
+ADCDriver ADCD2;
+#endif
+
 /*===========================================================================*/
 /* Driver local variables and types.                                         */
 /*===========================================================================*/
@@ -83,17 +88,12 @@ static void calibrate(ADCDriver *adcp) {
 /* Driver interrupt handlers.                                                */
 /*===========================================================================*/
 
-#if KINETIS_ADC_USE_ADC0 || defined(__DOXYGEN__)
 /**
- * @brief   ADC interrupt handler.
+ * @brief   Common IRQ handler.
  *
- * @isr
+ * @param[in] adcp       ADCDriver associated with the ADC
  */
-OSAL_IRQ_HANDLER(KINETIS_ADC0_IRQ_VECTOR) {
-  OSAL_IRQ_PROLOGUE();
-
-  ADCDriver *adcp = &ADCD1;
-
+static void serve_interrupt(ADCDriver *adcp) {
   /* Disable Interrupt, Disable Channel */
   adcp->adc->SC1A = ADCx_SC1n_ADCH(ADCx_SC1n_ADCH_DISABLED);
 
@@ -130,7 +130,30 @@ OSAL_IRQ_HANDLER(KINETIS_ADC0_IRQ_VECTOR) {
     /* Enable Interrupt, Select the Channel */
     adcp->adc->SC1A = ADCx_SC1n_AIEN | ADCx_SC1n_ADCH(adcp->current_channel);
   }
+}
 
+#if KINETIS_ADC_USE_ADC0 || defined(__DOXYGEN__)
+/**
+ * @brief   ADC interrupt handler.
+ *
+ * @isr
+ */
+OSAL_IRQ_HANDLER(KINETIS_ADC0_IRQ_VECTOR) {
+  OSAL_IRQ_PROLOGUE();
+  serve_interrupt(&ADCD1);
+  OSAL_IRQ_EPILOGUE();
+}
+#endif
+
+#if KINETIS_ADC_USE_ADC1 || defined(__DOXYGEN__)
+/**
+ * @brief   ADC interrupt handler.
+ *
+ * @isr
+ */
+OSAL_IRQ_HANDLER(KINETIS_ADC1_IRQ_VECTOR) {
+  OSAL_IRQ_PROLOGUE();
+  serve_interrupt(&ADCD2);
   OSAL_IRQ_EPILOGUE();
 }
 #endif
@@ -151,9 +174,20 @@ void adc_lld_init(void) {
   adcObjectInit(&ADCD1);
 #endif
 
+#if KINETIS_ADC_USE_ADC1
+  /* Driver initialization.*/
+  adcObjectInit(&ADCD2);
+#endif
+
   /* The shared vector is initialized on driver initialization and never
      disabled.*/
+#if KINETIS_ADC_USE_ADC0
   nvicEnableVector(ADC0_IRQn, KINETIS_ADC_IRQ_PRIORITY);
+#endif
+
+#if KINETIS_ADC_USE_ADC1
+  nvicEnableVector(ADC1_IRQn, KINETIS_ADC_IRQ_PRIORITY);
+#endif
 }
 
 /**
@@ -177,6 +211,15 @@ void adc_lld_start(ADCDriver *adcp) {
       }
     }
 #endif /* KINETIS_ADC_USE_ADC0 */
+
+#if KINETIS_ADC_USE_ADC1
+    if (&ADCD2 == adcp) {
+      adcp->adc = ADC1;
+      if (adcp->config->calibrate) {
+        calibrate(adcp);
+      }
+    }
+#endif /* KINETIS_ADC_USE_ADC1 */
   }
 }
 
@@ -195,6 +238,13 @@ void adc_lld_stop(ADCDriver *adcp) {
 
 #if KINETIS_ADC_USE_ADC0
     if (&ADCD1 == adcp) {
+      /* Disable Interrupt, Disable Channel */
+      adcp->adc->SC1A = ADCx_SC1n_ADCH(ADCx_SC1n_ADCH_DISABLED);
+    }
+#endif
+
+#if KINETIS_ADC_USE_ADC1
+    if (&ADCD2 == adcp) {
       /* Disable Interrupt, Disable Channel */
       adcp->adc->SC1A = ADCx_SC1n_ADCH(ADCx_SC1n_ADCH_DISABLED);
     }

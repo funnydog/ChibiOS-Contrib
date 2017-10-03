@@ -50,6 +50,18 @@ SerialDriver SD2;
 SerialDriver SD3;
 #endif
 
+#if KINETIS_SERIAL_USE_UART3 || defined(__DOXYGEN__)
+SerialDriver SD4;
+#endif
+
+#if KINETIS_SERIAL_USE_UART4 || defined(__DOXYGEN__)
+SerialDriver SD5;
+#endif
+
+#if KINETIS_SERIAL_USE_UART5 || defined(__DOXYGEN__)
+SerialDriver SD6;
+#endif
+
 /*===========================================================================*/
 /* Driver local variables and types.                                         */
 /*===========================================================================*/
@@ -208,6 +220,30 @@ static void notify3(io_queue_t *qp)
 }
 #endif
 
+#if KINETIS_SERIAL_USE_UART3 || defined(__DOXYGEN__)
+static void notify4(io_queue_t *qp)
+{
+  (void)qp;
+  preload(&SD4);
+}
+#endif
+
+#if KINETIS_SERIAL_USE_UART4 || defined(__DOXYGEN__)
+static void notify5(io_queue_t *qp)
+{
+  (void)qp;
+  preload(&SD5);
+}
+#endif
+
+#if KINETIS_SERIAL_USE_UART5 || defined(__DOXYGEN__)
+static void notify6(io_queue_t *qp)
+{
+  (void)qp;
+  preload(&SD6);
+}
+#endif
+
 /**
  * @brief   Common UART configuration.
  *
@@ -240,7 +276,7 @@ static void configure_uart(SerialDriver *sdp, const SerialConfig *config) {
   }
 #endif /* KINETIS_SERIAL_USE_UART0 */
 
-#elif defined(K20x) /* KL2x */
+#elif defined(K20x) || defined(K64) /* KL2x */
 
   /* UARTs 0 and 1 are clocked from SYSCLK, others from BUSCLK on K20x. */
 #if KINETIS_SERIAL_USE_UART0
@@ -260,7 +296,7 @@ static void configure_uart(SerialDriver *sdp, const SerialConfig *config) {
 
   *(uart->bdh_p) = UARTx_BDH_SBR(divisor >> 13) | (*(uart->bdh_p) & ~UARTx_BDH_SBR_MASK);
   *(uart->bdl_p) = UARTx_BDL_SBR(divisor >> 5);
-#if defined(K20x)
+#if defined(K20x) || defined(K64)
   *(uart->c4_p) = UARTx_C4_BRFA(divisor) | (*(uart->c4_p) & ~UARTx_C4_BRFA_MASK);
 #endif /* K20x */
 
@@ -300,6 +336,30 @@ OSAL_IRQ_HANDLER(KINETIS_SERIAL2_IRQ_VECTOR) {
 }
 #endif
 
+#if KINETIS_SERIAL_USE_UART3 || defined(__DOXYGEN__)
+OSAL_IRQ_HANDLER(KINETIS_SERIAL3_IRQ_VECTOR) {
+  OSAL_IRQ_PROLOGUE();
+  serve_interrupt(&SD4);
+  OSAL_IRQ_EPILOGUE();
+}
+#endif
+
+#if KINETIS_SERIAL_USE_UART4 || defined(__DOXYGEN__)
+OSAL_IRQ_HANDLER(KINETIS_SERIAL4_IRQ_VECTOR) {
+  OSAL_IRQ_PROLOGUE();
+  serve_interrupt(&SD5);
+  OSAL_IRQ_EPILOGUE();
+}
+#endif
+
+#if KINETIS_SERIAL_USE_UART5 || defined(__DOXYGEN__)
+OSAL_IRQ_HANDLER(KINETIS_SERIAL5_IRQ_VECTOR) {
+  OSAL_IRQ_PROLOGUE();
+  serve_interrupt(&SD6);
+  OSAL_IRQ_EPILOGUE();
+}
+#endif
+
 #if KINETIS_HAS_SERIAL_ERROR_IRQ
 
 #if KINETIS_SERIAL_USE_UART0 || defined(__DOXYGEN__)
@@ -325,6 +385,31 @@ OSAL_IRQ_HANDLER(KINETIS_SERIAL2_ERROR_IRQ_VECTOR) {
   OSAL_IRQ_EPILOGUE();
 }
 #endif
+
+#if KINETIS_SERIAL_USE_UART3 || defined(__DOXYGEN__)
+OSAL_IRQ_HANDLER(KINETIS_SERIAL3_ERROR_IRQ_VECTOR) {
+  OSAL_IRQ_PROLOGUE();
+  serve_error_interrupt(&SD4);
+  OSAL_IRQ_EPILOGUE();
+}
+#endif
+
+#if KINETIS_SERIAL_USE_UART4 || defined(__DOXYGEN__)
+OSAL_IRQ_HANDLER(KINETIS_SERIAL4_ERROR_IRQ_VECTOR) {
+  OSAL_IRQ_PROLOGUE();
+  serve_error_interrupt(&SD5);
+  OSAL_IRQ_EPILOGUE();
+}
+#endif
+
+#if KINETIS_SERIAL_USE_UART5 || defined(__DOXYGEN__)
+OSAL_IRQ_HANDLER(KINETIS_SERIAL5_ERROR_IRQ_VECTOR) {
+  OSAL_IRQ_PROLOGUE();
+  serve_error_interrupt(&SD6);
+  OSAL_IRQ_EPILOGUE();
+}
+#endif
+
 
 #endif /* KINETIS_HAS_SERIAL_ERROR_IRQ */
 
@@ -419,6 +504,51 @@ void sd_lld_init(void) {
   SD3.uart.d_p =   &(UART2->D);
   SD3.uart.uart_p = UART2;
 #endif /* KINETIS_SERIAL_USE_UART2 */
+
+#if KINETIS_SERIAL_USE_UART3
+  /* Driver initialization.*/
+  sdObjectInit(&SD4, NULL, notify4);
+  SD4.uart.bdh_p = &(UART3->BDH);
+  SD4.uart.bdl_p = &(UART3->BDL);
+  SD4.uart.c1_p =  &(UART3->C1);
+  SD4.uart.c2_p =  &(UART3->C2);
+  SD4.uart.c3_p =  &(UART3->C3);
+  SD4.uart.c4_p =  &(UART3->C4);
+  SD4.uart.s1_p =  (volatile uint8_t *)&(UART3->S1);
+  SD4.uart.s2_p =  &(UART3->S2);
+  SD4.uart.d_p =   &(UART3->D);
+  SD4.uart.uart_p = UART3;
+#endif /* KINETIS_SERIAL_USE_UART3 */
+
+#if KINETIS_SERIAL_USE_UART4
+  /* Driver initialization.*/
+  sdObjectInit(&SD5, NULL, notify5);
+  SD5.uart.bdh_p = &(UART4->BDH);
+  SD5.uart.bdl_p = &(UART4->BDL);
+  SD5.uart.c1_p =  &(UART4->C1);
+  SD5.uart.c2_p =  &(UART4->C2);
+  SD5.uart.c3_p =  &(UART4->C3);
+  SD5.uart.c4_p =  &(UART4->C4);
+  SD5.uart.s1_p =  (volatile uint8_t *)&(UART4->S1);
+  SD5.uart.s2_p =  &(UART4->S2);
+  SD5.uart.d_p =   &(UART4->D);
+  SD5.uart.uart_p = UART4;
+#endif /* KINETIS_SERIAL_USE_UART4 */
+
+#if KINETIS_SERIAL_USE_UART5
+  /* Driver initialization.*/
+  sdObjectInit(&SD6, NULL, notify6);
+  SD6.uart.bdh_p = &(UART5->BDH);
+  SD6.uart.bdl_p = &(UART5->BDL);
+  SD6.uart.c1_p =  &(UART5->C1);
+  SD6.uart.c2_p =  &(UART5->C2);
+  SD6.uart.c3_p =  &(UART5->C3);
+  SD6.uart.c4_p =  &(UART5->C4);
+  SD6.uart.s1_p =  (volatile uint8_t *)&(UART5->S1);
+  SD6.uart.s2_p =  &(UART5->S2);
+  SD6.uart.d_p =   &(UART5->D);
+  SD6.uart.uart_p = UART5;
+#endif /* KINETIS_SERIAL_USE_UART5 */
 }
 
 /**
@@ -481,7 +611,7 @@ void sd_lld_start(SerialDriver *sdp, const SerialConfig *config) {
       configure_uart(sdp, config);
 #if KINETIS_HAS_SERIAL_ERROR_IRQ
       nvicEnableVector(UART1Status_IRQn, KINETIS_SERIAL_UART1_PRIORITY);
-      nvicEnableVector(UART1Error_IRQn, KINETIS_SERIAL_UART0_PRIORITY);
+      nvicEnableVector(UART1Error_IRQn, KINETIS_SERIAL_UART1_PRIORITY);
 #else /* KINETIS_HAS_SERIAL_ERROR_IRQ */
 #if KINETIS_SERIAL1_IS_LPUART
       nvicEnableVector(LPUART1_IRQn, KINETIS_SERIAL_UART1_PRIORITY);
@@ -498,12 +628,51 @@ void sd_lld_start(SerialDriver *sdp, const SerialConfig *config) {
       configure_uart(sdp, config);
 #if KINETIS_HAS_SERIAL_ERROR_IRQ
       nvicEnableVector(UART2Status_IRQn, KINETIS_SERIAL_UART2_PRIORITY);
-      nvicEnableVector(UART2Error_IRQn, KINETIS_SERIAL_UART0_PRIORITY);
+      nvicEnableVector(UART2Error_IRQn, KINETIS_SERIAL_UART2_PRIORITY);
 #else /* KINETIS_HAS_SERIAL_ERROR_IRQ */
       nvicEnableVector(UART2_IRQn, KINETIS_SERIAL_UART2_PRIORITY);
 #endif /* KINETIS_HAS_SERIAL_ERROR_IRQ */
     }
 #endif /* KINETIS_SERIAL_USE_UART2 */
+
+#if KINETIS_SERIAL_USE_UART3
+    if (sdp == &SD4) {
+      SIM->SCGC4 |= SIM_SCGC4_UART3;
+      configure_uart(sdp, config);
+#if KINETIS_HAS_SERIAL_ERROR_IRQ
+      nvicEnableVector(UART3Status_IRQn, KINETIS_SERIAL_UART3_PRIORITY);
+      nvicEnableVector(UART3Error_IRQn, KINETIS_SERIAL_UART3_PRIORITY);
+#else /* KINETIS_HAS_SERIAL_ERROR_IRQ */
+      nvicEnableVector(UART3_IRQn, KINETIS_SERIAL_UART3_PRIORITY);
+#endif /* KINETIS_HAS_SERIAL_ERROR_IRQ */
+    }
+#endif /* KINETIS_SERIAL_USE_UART3 */
+
+#if KINETIS_SERIAL_USE_UART4
+    if (sdp == &SD5) {
+      SIM->SCGC1 |= SIM_SCGC1_UART4;
+      configure_uart(sdp, config);
+#if KINETIS_HAS_SERIAL_ERROR_IRQ
+      nvicEnableVector(UART4Status_IRQn, KINETIS_SERIAL_UART4_PRIORITY);
+      nvicEnableVector(UART4Error_IRQn, KINETIS_SERIAL_UART4_PRIORITY);
+#else /* KINETIS_HAS_SERIAL_ERROR_IRQ */
+      nvicEnableVector(UART4_IRQn, KINETIS_SERIAL_UART4_PRIORITY);
+#endif /* KINETIS_HAS_SERIAL_ERROR_IRQ */
+    }
+#endif /* KINETIS_SERIAL_USE_UART4 */
+
+#if KINETIS_SERIAL_USE_UART5
+    if (sdp == &SD6) {
+      SIM->SCGC1 |= SIM_SCGC1_UART5;
+      configure_uart(sdp, config);
+#if KINETIS_HAS_SERIAL_ERROR_IRQ
+      nvicEnableVector(UART5Status_IRQn, KINETIS_SERIAL_UART5_PRIORITY);
+      nvicEnableVector(UART5Error_IRQn, KINETIS_SERIAL_UART5_PRIORITY);
+#else /* KINETIS_HAS_SERIAL_ERROR_IRQ */
+      nvicEnableVector(UART5_IRQn, KINETIS_SERIAL_UART5_PRIORITY);
+#endif /* KINETIS_HAS_SERIAL_ERROR_IRQ */
+    }
+#endif /* KINETIS_SERIAL_USE_UART5 */
 
   }
   /* Configures the peripheral.*/
@@ -573,6 +742,42 @@ void sd_lld_stop(SerialDriver *sdp) {
       nvicDisableVector(UART2_IRQn);
 #endif /* KINETIS_HAS_SERIAL_ERROR_IRQ */
       SIM->SCGC4 &= ~SIM_SCGC4_UART2;
+    }
+#endif
+
+  #if KINETIS_SERIAL_USE_UART3
+    if (sdp == &SD4) {
+#if KINETIS_HAS_SERIAL_ERROR_IRQ
+      nvicDisableVector(UART3Status_IRQn);
+      nvicDisableVector(UART3Error_IRQn);
+#else /* KINETIS_HAS_SERIAL_ERROR_IRQ */
+      nvicDisableVector(UART3_IRQn);
+#endif /* KINETIS_HAS_SERIAL_ERROR_IRQ */
+      SIM->SCGC4 &= ~SIM_SCGC4_UART3;
+    }
+#endif
+
+#if KINETIS_SERIAL_USE_UART4
+    if (sdp == &SD5) {
+#if KINETIS_HAS_SERIAL_ERROR_IRQ
+      nvicDisableVector(UART4Status_IRQn);
+      nvicDisableVector(UART4Error_IRQn);
+#else /* KINETIS_HAS_SERIAL_ERROR_IRQ */
+      nvicDisableVector(UART4_IRQn);
+#endif /* KINETIS_HAS_SERIAL_ERROR_IRQ */
+      SIM->SCGC1 &= ~SIM_SCGC1_UART4;
+    }
+#endif
+
+#if KINETIS_SERIAL_USE_UART5
+    if (sdp == &SD6) {
+#if KINETIS_HAS_SERIAL_ERROR_IRQ
+      nvicDisableVector(UART5Status_IRQn);
+      nvicDisableVector(UART5Error_IRQn);
+#else /* KINETIS_HAS_SERIAL_ERROR_IRQ */
+      nvicDisableVector(UART5_IRQn);
+#endif /* KINETIS_HAS_SERIAL_ERROR_IRQ */
+      SIM->SCGC1 &= ~SIM_SCGC1_UART5;
     }
 #endif
   }

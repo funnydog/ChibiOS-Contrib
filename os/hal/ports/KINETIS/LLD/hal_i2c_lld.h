@@ -68,6 +68,16 @@
 /** @} */
 
 /**
+ * @brief   I2C2 driver enable switch.
+ * @details If set to @p TRUE the support for I2C2 is included.
+ * @note    The default is @p FALSE.
+ */
+#if !defined(KINETIS_I2C_USE_I2C2) || defined(__DOXYGEN__)
+#define KINETIS_I2C_USE_I2C2               FALSE
+#endif
+/** @} */
+
+/**
  * @brief   I2C0 interrupt priority level setting.
  */
 #if !defined(KINETIS_I2C_I2C0_PRIORITY) || defined(__DOXYGEN__)
@@ -79,6 +89,13 @@
  */
 #if !defined(KINETIS_I2C_I2C1_PRIORITY) || defined(__DOXYGEN__)
 #define KINETIS_I2C_I2C1_PRIORITY        12
+#endif
+
+/**
+ * @brief   I2C2 interrupt priority level setting.
+ */
+#if !defined(KINETIS_I2C_I2C2_PRIORITY) || defined(__DOXYGEN__)
+#define KINETIS_I2C_I2C2_PRIORITY        12
 #endif
 
 /**
@@ -101,8 +118,11 @@
 #error "I2C1 not present in the selected device"
 #endif
 
+#if KINETIS_I2C_USE_I2C2 && !KINETIS_HAS_I2C2
+#error "I2C2 not present in the selected device"
+#endif
 
-#if !(KINETIS_I2C_USE_I2C0 || KINETIS_I2C_USE_I2C1)
+#if !(KINETIS_I2C_USE_I2C0 || KINETIS_I2C_USE_I2C1 || KINETIS_I2C_USE_I2C2)
 #error "I2C driver activated but no I2C peripheral assigned"
 #endif
 
@@ -219,6 +239,10 @@ extern I2CDriver I2CD1;
 
 #if KINETIS_I2C_USE_I2C1
 extern I2CDriver I2CD2;
+#endif
+
+#if KINETIS_I2C_USE_I2C2
+extern I2CDriver I2CD3;
 #endif
 
 #endif
